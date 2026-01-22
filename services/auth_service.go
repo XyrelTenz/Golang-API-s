@@ -53,3 +53,19 @@ func (s *AuthService) Login(username, password string) bool {
 
 	return storedPassword == s.users[password]
 }
+
+func (s *AuthService) GetProfile(username string) (model.User, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	user, exist := s.users[username]
+
+	if !exist {
+
+		return model.User{}, errors.New("user not found")
+
+	}
+
+	return user, nil
+
+}

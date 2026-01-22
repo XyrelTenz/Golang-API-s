@@ -3,69 +3,55 @@ package services
 
 import (
 	"errors"
-	"sync"
+
+	"gorm.io/gorm"
 
 	"backend/model"
 )
 
 type AuthService struct {
-	mu    sync.RWMutex
-	users map[string]model.User
+	DB *gorm.DB
 }
 
-func NewAuthService() *AuthService {
+func NewAuthService(db *gorm.DB) *AuthService {
 	return &AuthService{
-		users: make(map[string]model.User),
+		DB: db,
 	}
 }
 
-func (s *AuthService) Register(username, password string) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+func (s *AuthService) Register(email, password string) error {
 
-	if _, exist := s.users[username]; exist {
-		return errors.New("users already exist")
+	user := model.User{
 
-	}
-
-	newUser := &model.User{
-		ID:       len(s.users) + 1,
-		Username: username,
+		Email:    email,
 		Password: password,
 	}
 
-	s.users[username] = *newUser
+	result := s.DB.Create(&user)
+
+	if result.Error != nil {
+		return errors.New("username already taken")
+	}
 
 	return nil
 
 }
 
-func (s *AuthService) Login(username, password string) bool {
+func (s *AuthService) Login(email, password string) (*model.User, error) {
 
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	var user model.User
 
-	storedPassword, exist := s.users[password]
+	result := s.DB.Where("email = ? AND password = ?", email, password).First(&user)
 
-	if !exist {
-		return false
+	if result.Error != nil {
+		return nil, errors.New("user not found")
 	}
 
-	return storedPassword == s.users[password]
-}
+	if user.Password != password {
 
-func (s *AuthService) GetProfile(username string) (model.User, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	user, exist := s.users[username]
-
-	if !exist {
-
-		return model.User{}, errors.New("user not found")
+		return nil, errors.New("invalid password")
 
 	}
 
-	return user, nil
-
+	return &user, nil
 }

@@ -18,7 +18,8 @@ func Database() {
 
 	var err error
 
-	DB, err := gorm.Open(sqlite.Open("backend.db"), &gorm.Config{})
+	// DB, err := gorm.Open(sqlite.Open("backend.db"), &gorm.Config{})
+	DB, err = gorm.Open(sqlite.Open("backend.db"), &gorm.Config{})
 
 	if err != nil {
 		log.Fatal("database not connected")

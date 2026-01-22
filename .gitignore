@@ -1,3 +1,5 @@
-*.env
-./todo.go
-*.air.toml
+.air.toml
+
+*.db
+
+todo.go

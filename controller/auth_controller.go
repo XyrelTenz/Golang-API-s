@@ -6,18 +6,75 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"backend/model"
+	"backend/services"
 )
 
-type BankController struct {
-	Bank *model.BankModel
+type AuthController struct {
+	AuthService *services.AuthService
 }
 
-func (bc *BankController) GetBalanceHandler(c *gin.Context) {
+type AuthRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
 
-	currentBalance := bc.Bank.GetBalance()
+func (ac *AuthController) Register(c *gin.Context) {
+	var req AuthRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+
+		c.JSON(http.StatusBadRequest, gin.H{
+
+			"error": "invalid json",
+		})
+		return
+
+	}
+
+	if err := ac.AuthService.Register(req.Email, req.Password); err != nil {
+
+		c.JSON(http.StatusConflict, gin.H{
+
+			"error": err.Error(),
+		})
+		return
+
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+
+		"message": "user successfully registered",
+	})
+
+}
+
+func (ac *AuthController) Login(c *gin.Context) {
+
+	var req AuthRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+
+		c.JSON(http.StatusBadRequest, gin.H{
+
+			"error": "invalid json",
+		})
+
+	}
+
+	user, err := ac.AuthService.Login(req.Email, req.Password)
+
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+
+			"error": err.Error(),
+		})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"Balance: ": currentBalance,
+
+		"message": "successfully login",
+		"user_id": user.ID,
 	})
+
 }

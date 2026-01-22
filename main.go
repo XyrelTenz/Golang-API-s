@@ -3,21 +3,24 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 
+	"backend/config"
 	"backend/controller"
-	"backend/model"
+	"backend/routes"
+	"backend/services"
 )
 
 func main() {
 
+	config.Database()
+
+	authService := services.NewAuthService(config.DB)
+	authController := &controller.AuthController{AuthService: authService}
+
 	router := gin.Default()
 
-	bank := &model.BankModel{}
+	routing := routes.NewRouteHandler(authController)
 
-	bankController := &controller.BankController{
-		Bank: bank,
-	}
-
-	router.GET("/balance", bankController.GetBalanceHandler)
+	routing.Router(router)
 
 	router.Run(":8080")
 }
